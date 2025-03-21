@@ -5,10 +5,15 @@ import org.json.JSONObject;
 public class Actions {
 
     // Sends echo command in specified direction
-    public void echo(JSONObject parameter, JSONObject decision, Direction direction) {
-        parameter.put("direction", direction);
+    public JSONObject echo(Direction direction) {
+        JSONObject decision = new JSONObject();
+        JSONObject parameter = new JSONObject();
+        
+        parameter.put("direction", direction.toString());
         decision.put("action", "echo");
         decision.put("parameters", parameter);
+        
+        return decision;
     }
 
     // Sends fly command
