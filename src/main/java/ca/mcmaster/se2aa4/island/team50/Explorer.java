@@ -7,7 +7,8 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
-import ca.mcmaster.se2aa4.island.team50.LocateIsland; //will be implemented
+import ca.mcmaster.se2aa4.island.team50.LocateIsland;
+import ca.mcmaster.se2aa4.island.team50.Phase;
 import eu.ace_design.island.bot.IExplorerRaid;
 
 public class Explorer implements IExplorerRaid {
@@ -16,12 +17,15 @@ public class Explorer implements IExplorerRaid {
     private Direction direction;
     private int battery;
 
-    // stoers the echo results
+    // Stores echo results
     private String lastEchoFront = null;
     private String lastEchoLeft = null;
     private String lastEchoRight = null;
 
-    // current phase of the drone will be executing
+    // Stores scan/echo extras
+    private JSONObject lastExtras = null;
+
+    // Current phase of the drone will be executing
     private Phase currentPhase;
 
     @Override
@@ -51,22 +55,25 @@ public class Explorer implements IExplorerRaid {
         int cost = response.getInt("cost");
         battery -= cost;
 
-        JSONObject extras = response.getJSONObject("extras");
-        if (extras.has("echo")) {
-            JSONObject echo = extras.getJSONObject("echo");
-            String found = echo.getString("found");
-            String directionStr = echo.getString("direction");
+        if (response.has("extras")) {
+            lastExtras = response.getJSONObject("extras");
 
-            switch (directionStr) {
-                case "FRONT":
-                    lastEchoFront = found;
-                    break;
-                case "LEFT":
-                    lastEchoLeft = found;
-                    break;
-                case "RIGHT":
-                    lastEchoRight = found;
-                    break;
+            if (lastExtras.has("echo")) {
+                JSONObject echo = lastExtras.getJSONObject("echo");
+                String found = echo.getString("found");
+                String directionStr = echo.getString("direction");
+
+                switch (directionStr) {
+                    case "FRONT":
+                        lastEchoFront = found;
+                        break;
+                    case "LEFT":
+                        lastEchoLeft = found;
+                        break;
+                    case "RIGHT":
+                        lastEchoRight = found;
+                        break;
+                }
             }
         }
 
@@ -78,7 +85,7 @@ public class Explorer implements IExplorerRaid {
         return "not implemented yet";
     }
 
-
+    // Getters
     public String getLastEchoFront() {
         return lastEchoFront;
     }
@@ -89,6 +96,10 @@ public class Explorer implements IExplorerRaid {
 
     public String getLastEchoRight() {
         return lastEchoRight;
+    }
+
+    public JSONObject getLastExtras() {
+        return lastExtras;
     }
 
     public Direction getDirection() {
