@@ -60,7 +60,7 @@ public class BeginCoastlineScan implements Phase {
 
     @Override
     public Phase nextPhase() {
-        return null; // Replace with next  phase later
+        return null; // Replace with next  phase later (EmergencySiteSearch)  return new EmergencySiteSearch(currentDirection, batteryLevel);
     }
 
     public Set<String> getFoundCreeks() {

@@ -22,22 +22,6 @@ public enum Direction {
         }
     }
 
-    // Returns the opposite direction
-    public Direction getOpposite() {
-        switch (this) {
-            case N:
-                return S;
-            case E:
-                return W;
-            case S:
-                return N;
-            case W:
-                return E;
-            default:
-                throw new IllegalStateException("Invalid direction");
-        }
-    }
-
     // Returns the direction to the left (90-degree turn left)
     public Direction turnLeft() {
         switch (this) {
