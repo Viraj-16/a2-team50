@@ -10,6 +10,7 @@ import org.json.JSONTokener;
 import ca.mcmaster.se2aa4.island.team50.LocateIsland;
 import ca.mcmaster.se2aa4.island.team50.Phase;
 import eu.ace_design.island.bot.IExplorerRaid;
+import java.time.chrono.ThaiBuddhistChronology;
 
 public class Explorer implements IExplorerRaid {
 
@@ -21,6 +22,10 @@ public class Explorer implements IExplorerRaid {
     private String lastEchoFront = null;
     private String lastEchoLeft = null;
     private String lastEchoRight = null;
+
+    private int frontRange = 1;
+    private int leftRange = -1;
+    private int rightRange = -1;
 
     // Stores scan/echo extras
     private JSONObject lastExtras = null;
@@ -44,7 +49,10 @@ public class Explorer implements IExplorerRaid {
     @Override
     public String takeDecision() {
         if (currentPhase.isFinished()) {
-            currentPhase = currentPhase.nextPhase();
+            JSONObject stopdecision = new JSONObject(); 
+            stopdecision.put("action", "stop");
+            return stopdecision.toString();
+            //currentPhase = currentPhase.nextPhase();
         }
         return currentPhase.createDecision(this).toString();
     }
@@ -61,22 +69,24 @@ public class Explorer implements IExplorerRaid {
             if (lastExtras.has("echo")) {
                 JSONObject echo = lastExtras.getJSONObject("echo");
                 String found = echo.getString("found");
+                int range = echo.getInt("range");
                 String directionStr = echo.getString("direction");
+                logger.info(found);
 
-                switch (directionStr) {
-                    case "FRONT":
-                        lastEchoFront = found;
-                        break;
-                    case "LEFT":
-                        lastEchoLeft = found;
-                        break;
-                    case "RIGHT":
-                        lastEchoRight = found;
-                        break;
+                if (directionStr.equals(direction.toString())){
+                    lastEchoFront = found;
+                    frontRange = range;
+                } else if (directionStr.equals(direction.turnLeft().toString())){
+                    lastEchoLeft = found;
+                    leftRange = range;
+                } else if (directionStr.equals(direction.turnRight().toString())){
+                    lastEchoRight = found;
+                    rightRange = range;
                 }
             }
         }
-
+        logger.info("Updated ranges: Front = " + frontRange+ ", Left = " + leftRange+ ", Right = " + rightRange);
+        logger.info("Updated echoes "+ lastEchoLeft+" "+lastEchoFront+" "+lastEchoRight);
         currentPhase.checkDrone(this);
     }
 
@@ -96,6 +106,18 @@ public class Explorer implements IExplorerRaid {
 
     public String getLastEchoRight() {
         return lastEchoRight;
+    }
+
+    public int getFrontRange() {
+        return frontRange;
+    }
+
+    public int getLeftRange() {
+        return leftRange;
+    }
+
+    public int getRightRange() {
+        return rightRange;
     }
 
     public JSONObject getLastExtras() {
