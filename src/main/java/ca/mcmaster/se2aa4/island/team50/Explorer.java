@@ -56,10 +56,7 @@ public class Explorer implements IExplorerRaid {
     public String takeDecision() {
         currentPhase.checkDrone(this);
         if (currentPhase.isFinished()) {
-            JSONObject stopdecision = new JSONObject(); 
-            stopdecision.put("action", "stop");
-            return stopdecision.toString();
-            //currentPhase = currentPhase.nextPhase();
+            currentPhase = currentPhase.nextPhase();
         }
         lastDecision = currentPhase.createDecision(this);
         return lastDecision.toString();
