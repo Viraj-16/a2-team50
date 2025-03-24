@@ -57,6 +57,13 @@ public class Explorer implements IExplorerRaid {
         currentPhase.checkDrone(this);
         if (currentPhase.isFinished()) {
             currentPhase = currentPhase.nextPhase();
+            
+            if (currentPhase == null){
+                JSONObject decision = new JSONObject();
+                decision.put("action", "stop");
+                logger.info("** Decision: {}",decision.toString());
+                return decision.toString();
+            }
         }
         lastDecision = currentPhase.createDecision(this);
         return lastDecision.toString();
@@ -93,7 +100,6 @@ public class Explorer implements IExplorerRaid {
                 lastEchoRight = found;
                 rightRange = range;
             }
-            //}
         }
         logger.info("Updated ranges: Front = " + frontRange+ ", Left = " + leftRange+ ", Right = " + rightRange);
         logger.info("Updated echoes "+ lastEchoLeft+" "+lastEchoFront+" "+lastEchoRight);
