@@ -77,16 +77,11 @@ public class Explorer implements IExplorerRaid {
 
         if (response.has("extras") && response.getJSONObject("extras").has("found")) {
             lastExtras = response.getJSONObject("extras");
-            JSONObject parameter = response.getJSONObject("parameters");
 
-            if (lastExtras.has("echo")) {
-            JSONObject echo = lastExtras.getJSONObject("echo");
             String found = lastExtras.getString("found");
             int range = lastExtras.getInt("range");
-            String directionStr = lastDirection;
             logger.info(found);
             logger.info(range);
-            logger.info(directionStr);
 
             if (lastDirection.equals(direction.toString())){
                 lastEchoFront = found;
@@ -103,9 +98,8 @@ public class Explorer implements IExplorerRaid {
         logger.info("Updated ranges: Front = " + frontRange+ ", Left = " + leftRange+ ", Right = " + rightRange);
         logger.info("Updated echoes "+ lastEchoLeft+" "+lastEchoFront+" "+lastEchoRight);
 
-        direction = currentPhase.getCurrentDirection();
-        currentPhase.checkDrone(this);
-    }
+        currentPhase.checkDrone(this);}
+    
 
     @Override
     public String deliverFinalReport() {
