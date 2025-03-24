@@ -152,4 +152,8 @@ public class Explorer implements IExplorerRaid {
     public int getBatteryLevel() {
         return battery;
     }
+    public Logger getLogger() {
+        return logger;
+    }
+    
 }
