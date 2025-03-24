@@ -104,7 +104,7 @@ public class LocateIsland implements Phase {
 
     private void turnAndFly(Direction direction, Actions actions) {
         JSONObject headingCmd = new JSONObject();
-        //JSONObject flyCmd = new JSONObject();
+        JSONObject flyCmd = new JSONObject();
         JSONObject scanCmd = new JSONObject();
         JSONObject param = new JSONObject();
 
