@@ -28,7 +28,7 @@ public class Actions {
 
     // Sends heading command to change drone's direction
     public void heading(JSONObject parameter, JSONObject decision, Direction direction) {
-        parameter.put("direction", direction);
+        parameter.put("direction", direction.toString());
         decision.put("action", "heading");
         decision.put("parameters", parameter);
     }

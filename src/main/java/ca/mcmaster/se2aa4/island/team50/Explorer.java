@@ -23,12 +23,18 @@ public class Explorer implements IExplorerRaid {
     private String lastEchoLeft = null;
     private String lastEchoRight = null;
 
-    private int frontRange = 1;
+    private int frontRange = 3;
     private int leftRange = -1;
     private int rightRange = -1;
 
     // Stores scan/echo extras
     private JSONObject lastExtras = null;
+
+    // Stores last decision
+    private JSONObject lastDecision = null;
+
+    // Stores last direction echoed in order to assign found and range values
+    private String lastDirection = null;
 
     // Current phase of the drone will be executing
     private Phase currentPhase;
@@ -48,13 +54,15 @@ public class Explorer implements IExplorerRaid {
 
     @Override
     public String takeDecision() {
+        currentPhase.checkDrone(this);
         if (currentPhase.isFinished()) {
             JSONObject stopdecision = new JSONObject(); 
             stopdecision.put("action", "stop");
             return stopdecision.toString();
             //currentPhase = currentPhase.nextPhase();
         }
-        return currentPhase.createDecision(this).toString();
+        lastDecision = currentPhase.createDecision(this);
+        return lastDecision.toString();
     }
 
     @Override
@@ -63,36 +71,52 @@ public class Explorer implements IExplorerRaid {
         int cost = response.getInt("cost");
         battery -= cost;
 
-        if (response.has("extras")) {
+        if (lastDecision.has("parameters")){
+            JSONObject parameter = lastDecision.getJSONObject("parameters");
+            lastDirection = parameter.getString("direction");
+            logger.info(lastDirection);
+        }
+        
+
+        if (response.has("extras") && response.getJSONObject("extras").has("found")) {
             lastExtras = response.getJSONObject("extras");
+            //JSONObject parameter = response.getJSONObject("parameters");
 
-            if (lastExtras.has("echo")) {
-                JSONObject echo = lastExtras.getJSONObject("echo");
-                String found = echo.getString("found");
-                int range = echo.getInt("range");
-                String directionStr = echo.getString("direction");
-                logger.info(found);
+            //if (lastExtras.has("echo")) {
+            //JSONObject echo = lastExtras.getJSONObject("echo");
+            String found = lastExtras.getString("found");
+            int range = lastExtras.getInt("range");
+            //String directionStr = lastDirection;
+            logger.info(found);
+            logger.info(range);
+            //logger.info(directionStr);
 
-                if (directionStr.equals(direction.toString())){
-                    lastEchoFront = found;
-                    frontRange = range;
-                } else if (directionStr.equals(direction.turnLeft().toString())){
-                    lastEchoLeft = found;
-                    leftRange = range;
-                } else if (directionStr.equals(direction.turnRight().toString())){
-                    lastEchoRight = found;
-                    rightRange = range;
-                }
+            if (lastDirection.equals(direction.toString())){
+                lastEchoFront = found;
+                frontRange = range;
+            } else if (lastDirection.equals(direction.turnLeft().toString())){
+                lastEchoLeft = found;
+                leftRange = range;
+            } else if (lastDirection.equals(direction.turnRight().toString())){
+                lastEchoRight = found;
+                rightRange = range;
             }
+            //}
         }
         logger.info("Updated ranges: Front = " + frontRange+ ", Left = " + leftRange+ ", Right = " + rightRange);
         logger.info("Updated echoes "+ lastEchoLeft+" "+lastEchoFront+" "+lastEchoRight);
+
+        //direction = currentPhase.getCurrentDirection();
         currentPhase.checkDrone(this);
     }
 
     @Override
     public String deliverFinalReport() {
         return "not implemented yet";
+    }
+
+    public void directionSetter(Direction newDirection){
+        this.direction = newDirection;
     }
 
     // Getters

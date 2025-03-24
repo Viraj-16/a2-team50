@@ -11,7 +11,6 @@ public class LocateIsland implements Phase {
     private boolean islandSpotted = false;
     private JSONObject currentDecision;
     private Direction currentDirection;
-    //private int frontRange, leftRange, rightRange;
 
     public LocateIsland(Direction startDirection) {
         this.currentDirection = startDirection;
@@ -28,39 +27,43 @@ public class LocateIsland implements Phase {
         }
 
         if (!islandSpotted) {
-            taskQueue.add(actions.echo(currentDirection));
-            taskQueue.add(actions.echo(currentDirection.turnRight()));
-            taskQueue.add(actions.echo(currentDirection.turnLeft()));
-            //return taskQueue.poll();
+            int frontRange = explorer.getFrontRange();
+            int leftRange = explorer.getLeftRange();
+            int rightRange = explorer.getRightRange();
 
-            if (explorer.getFrontRange() > 0) {
-                JSONObject flyCmd = new JSONObject();
-                actions.fly(flyCmd);
-                taskQueue.add(flyCmd);
+            taskQueue.add(actions.echo(currentDirection));
+
+            if (frontRange > 2) {
                 JSONObject scanCmd = new JSONObject();
                 actions.scan(scanCmd);
                 taskQueue.add(scanCmd);
 
-            } else {
-                if (explorer.getLeftRange() > explorer.getRightRange()) {
-                    taskQueue.add(turnAndFly(currentDirection.turnLeft(), actions));
-                    taskQueue.add(turnAndFly(currentDirection.turnLeft(), actions));
-                    //currentDirection = currentDirection.turnLeft();
+                JSONObject flyCmd = new JSONObject();
+                actions.fly(flyCmd);
+                taskQueue.add(flyCmd);
+
+            } else if (frontRange <= 2){
+                taskQueue.add(actions.echo(currentDirection.turnRight()));
+                taskQueue.add(actions.echo(currentDirection.turnLeft()));
+                if (leftRange > rightRange) {
+                    turnAndFly(currentDirection.turnLeft(), actions);
+                    explorer.directionSetter(currentDirection);
+                    turnAndFly(currentDirection.turnLeft(), actions);
+                    explorer.directionSetter(currentDirection);
+                    taskQueue.add(actions.echo(currentDirection));
 
                 } else {
-                    taskQueue.add(turnAndFly(currentDirection.turnRight(), actions));
-                    taskQueue.add(turnAndFly(currentDirection.turnRight(), actions));
-                    //currentDirection = currentDirection.turnRight();
+                    turnAndFly(currentDirection.turnRight(), actions);
+                    explorer.directionSetter(currentDirection);
+                    turnAndFly(currentDirection.turnRight(), actions);
+                    explorer.directionSetter(currentDirection);
+                    taskQueue.add(actions.echo(currentDirection));
                 }
             }
         }
 
         return taskQueue.poll();
 
-        /**JSONObject flyCmd = new JSONObject();
-        actions.fly(flyCmd);
-        currentDecision = flyCmd;
-        return currentDecision;**/
     }
 
     @Override
@@ -79,12 +82,16 @@ public class LocateIsland implements Phase {
 
     @Override
     public boolean isFinished() {
-        return islandSpotted && taskQueue.isEmpty();
+        return islandSpotted; //&& taskQueue.isEmpty();
     }
  
     @Override
     public Phase nextPhase() {
         return new BeginCoastlineScan(currentDirection); //  gotta make this class next
+    }
+
+    public Direction getCurrentDirection(){
+        return currentDirection;
     }
 
     public JSONObject getCurrentDecision() {
@@ -95,16 +102,19 @@ public class LocateIsland implements Phase {
         return taskQueue;
     }
 
-    private JSONObject turnAndFly(Direction direction, Actions actions) {
-        JSONObject decision = new JSONObject();
+    private void turnAndFly(Direction direction, Actions actions) {
+        JSONObject headingCmd = new JSONObject();
+        //JSONObject flyCmd = new JSONObject();
+        JSONObject scanCmd = new JSONObject();
         JSONObject param = new JSONObject();
 
-        actions.heading(param, decision, direction);
-        actions.fly(decision);
-        actions.scan(decision);
-        //actions.heading(param, decision, direction);
+        actions.scan(scanCmd);
+        taskQueue.add(scanCmd);
+
+        actions.heading(param, headingCmd, direction);
+        taskQueue.add(headingCmd);
+
         currentDirection = direction;
-        return decision;
     }
 }
 
