@@ -85,10 +85,10 @@ public class LocateIsland implements Phase {
         return islandSpotted; //&& taskQueue.isEmpty();
     }
  
-    @Override
-    public Phase nextPhase() {
-        return new BeginCoastlineScan(currentDirection); //  gotta make this class next
-    }
+    //@Override
+    //public Phase nextPhase() {
+      //  return new BeginCoastlineScan(currentDirection); //  gotta make this class next
+    //}
 
     public Direction getCurrentDirection(){
         return currentDirection;
