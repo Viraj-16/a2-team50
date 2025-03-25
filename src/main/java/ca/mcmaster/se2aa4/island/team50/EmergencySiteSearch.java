@@ -11,7 +11,8 @@ public class EmergencySiteSearch implements Phase {
     private final int MAX_HEIGHT = 20;
 
     private DroneController droneController;
-    private JSONObject nextMove = null;  // Store next move decision
+    private JSONObject nextMove = null;
+    private boolean justScanned = false; 
 
     public EmergencySiteSearch(Direction startingDirection, int battery) {
         droneController = new DroneController(startingDirection, battery);
@@ -29,46 +30,55 @@ public class EmergencySiteSearch implements Phase {
 
     @Override
     public JSONObject createDecision(Explorer explorer) {
-        // Prioritize any stored movement decision first
+        if (finished) {
+            explorer.getLogger().info("** Search finished — stopping");
+            JSONObject stop = new JSONObject();
+            stop.put("action", "stop");
+            return stop;
+        }
+
+        if (!justScanned) {
+            justScanned = true;
+            explorer.getLogger().info("** Scanning at (" + x + ", " + y + ")");
+            return droneController.scan();
+        }
+
+        // Use the move calculated from checkDrone()
+        justScanned = false;
         if (nextMove != null) {
             JSONObject move = nextMove;
-            nextMove = null;  // Clear after using
+            nextMove = null;
             explorer.getLogger().info("** Moving Decision: " + move.toString());
             return move;
         }
 
-        // Always scan first
-        JSONObject scanDecision = droneController.scan();
-        explorer.getLogger().info("** Scanning at (" + x + ", " + y + ")");
-        return scanDecision;
+        explorer.getLogger().info("** Warning: no move calculated, defaulting to flyForward()");
+        return droneController.flyForward(); // Fallback
     }
 
     @Override
     public void checkDrone(Explorer explorer) {
         JSONObject extras = explorer.getLastExtras();
 
-        // Check if emergency site detected
         if (extras != null && extras.has("POI")) {
             String poi = extras.getString("POI");
-            if (poi.contains("Emergency")) {
-                explorer.getLogger().info("** Emergency Site Found: " + poi);
+            if (poi.toLowerCase().contains("emergency")) {
+                explorer.getLogger().info("** Emergency Site FOUND: " + poi);
                 finished = true;
                 return;
             }
         }
 
-        // Battery safety
         if (explorer.getBatteryLevel() < 300) {
-            explorer.getLogger().info("** Battery low. Ending search.");
+            explorer.getLogger().info("** Battery too low to continue search.");
             finished = true;
             return;
         }
 
-        // Plan next move (save it, used in createDecision)
-        nextMove = decideNextMove(explorer);
+        nextMove = decideNextMove();
     }
 
-    private JSONObject decideNextMove(Explorer explorer) {
+    private JSONObject decideNextMove() {
         if (movingEast) {
             if (x < MAX_WIDTH - 1) {
                 if (droneController.getDirection() != Direction.E) {
@@ -78,7 +88,6 @@ public class EmergencySiteSearch implements Phase {
                     return droneController.flyForward();
                 }
             } else {
-                // End of row
                 if (y < MAX_HEIGHT - 1) {
                     if (droneController.getDirection() != Direction.S) {
                         return droneController.turnTo(Direction.S);
@@ -88,12 +97,11 @@ public class EmergencySiteSearch implements Phase {
                         return droneController.flyForward();
                     }
                 } else {
-                    // Reached bottom
                     finished = true;
-                    return droneController.scan();  // Final scan
+                    return droneController.scan();
                 }
             }
-        } else { // Moving West
+        } else { // Moving west
             if (x > 0) {
                 if (droneController.getDirection() != Direction.W) {
                     return droneController.turnTo(Direction.W);
@@ -102,7 +110,6 @@ public class EmergencySiteSearch implements Phase {
                     return droneController.flyForward();
                 }
             } else {
-                // End of row
                 if (y < MAX_HEIGHT - 1) {
                     if (droneController.getDirection() != Direction.S) {
                         return droneController.turnTo(Direction.S);
@@ -112,9 +119,8 @@ public class EmergencySiteSearch implements Phase {
                         return droneController.flyForward();
                     }
                 } else {
-                    // Reached bottom
                     finished = true;
-                    return droneController.scan();  // Final scan
+                    return droneController.scan();
                 }
             }
         }
