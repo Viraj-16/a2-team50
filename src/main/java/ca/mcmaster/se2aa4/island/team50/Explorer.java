@@ -179,7 +179,7 @@ public class Explorer implements IExplorerRaid {
     }
 
     public Logger getLogger() {
-        return logger;
-    }
-    
+    return logger;
+}
+
 }

@@ -53,19 +53,22 @@ public class EmergencySiteSearch implements Phase {
         }
 
         explorer.getLogger().info("** Warning: no move calculated, defaulting to flyForward()");
-        return droneController.flyForward(); // Fallback
+        return droneController.flyForward();
     }
 
     @Override
     public void checkDrone(Explorer explorer) {
         JSONObject extras = explorer.getLastExtras();
 
-        if (extras != null && extras.has("POI")) {
-            String poi = extras.getString("POI");
-            if (poi.toLowerCase().contains("emergency")) {
-                explorer.getLogger().info("** Emergency Site FOUND: " + poi);
-                finished = true;
-                return;
+        if (extras != null && extras.has("sites")) {
+            var sitesArray = extras.getJSONArray("sites");
+            for (int i = 0; i < sitesArray.length(); i++) {
+                String site = sitesArray.getString(i);
+                if (site.toLowerCase().contains("emergency")) {
+                    explorer.getLogger().info("** Emergency Site FOUND: " + site);
+                    finished = true;
+                    return;
+                }
             }
         }
 
@@ -76,7 +79,8 @@ public class EmergencySiteSearch implements Phase {
         }
 
         nextMove = decideNextMove();
-    }
+}
+
 
     private JSONObject decideNextMove() {
         if (movingEast) {
