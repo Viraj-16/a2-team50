@@ -19,7 +19,7 @@ public class Explorer implements IExplorerRaid {
     private final Logger logger = LogManager.getLogger();
     private Direction direction;
     private int battery;
-    private Set<String> creeks;
+    private Set<String> creeks = new HashSet<>();
 
     // Stores echo results
     private String lastEchoFront = null;
@@ -61,13 +61,16 @@ public class Explorer implements IExplorerRaid {
         if (currentPhase.isFinished()) {
             currentPhase = currentPhase.nextPhase();
             
-            if (currentPhase == null){
-                JSONObject decision = new JSONObject();
-                decision.put("action", "stop");
-                logger.info("** Decision: {}",decision.toString());
-                return decision.toString();
-            }
+            
         }
+
+        if (currentPhase == null){
+            JSONObject decision = new JSONObject();
+            decision.put("action", "stop");
+            logger.info("** Decision: {}",decision.toString());
+            return decision.toString();
+        }
+        
         lastDecision = currentPhase.createDecision(this);
         return lastDecision.toString();
     }
@@ -125,8 +128,10 @@ public class Explorer implements IExplorerRaid {
         logger.info("Updated ranges: Front = " + frontRange+ ", Left = " + leftRange+ ", Right = " + rightRange);
         logger.info("Updated echoes "+ lastEchoLeft+" "+lastEchoFront+" "+lastEchoRight);
 
-        currentPhase.checkDrone(this);}
-    
+        if (currentPhase != null){
+            currentPhase.checkDrone(this);
+        }
+        }
 
     @Override
     public String deliverFinalReport() {
@@ -179,7 +184,7 @@ public class Explorer implements IExplorerRaid {
     }
 
     public Logger getLogger() {
-    return logger;
-}
-
+        return logger;
+    }
+    
 }
