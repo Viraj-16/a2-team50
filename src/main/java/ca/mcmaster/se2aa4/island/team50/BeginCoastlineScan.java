@@ -47,7 +47,7 @@ public class BeginCoastlineScan implements Phase {
 
         } else {
             if (creeks.isEmpty()){
-                taskQueue.add(actions.echo(direction));
+                taskQueue.add(actions.echo(this.direction));
 
                 if (explorer.getLastEchoFront().equals("GROUND")) {
                     actions.scan(scanCmd);
@@ -59,17 +59,17 @@ public class BeginCoastlineScan implements Phase {
                 } else if (explorer.getLastEchoFront().equals("OUT_OF_RANGE")){
                     if (direction.toString().equals("W")) {
                         turnAndFly(direction.turnLeft(), actions);
-                        explorer.directionSetter(direction);
+                        explorer.directionSetter(this.direction);
                         turnAndFly(direction.turnLeft(), actions);
-                        explorer.directionSetter(direction);
-                        taskQueue.add(actions.echo(direction));
+                        explorer.directionSetter(this.direction);
+                        taskQueue.add(actions.echo(this.direction));
 
                     } else if (direction.toString().equals("E")){
                         turnAndFly(direction.turnRight(), actions);
-                        explorer.directionSetter(direction);
+                        explorer.directionSetter(this.direction);
                         turnAndFly(direction.turnRight(), actions);
-                        explorer.directionSetter(direction);
-                        taskQueue.add(actions.echo(direction));
+                        explorer.directionSetter(this.direction);
+                        taskQueue.add(actions.echo(this.direction));
                     }
                 }
             }
@@ -97,7 +97,8 @@ public class BeginCoastlineScan implements Phase {
 
     @Override
     public Phase nextPhase() {
-        return null; // Replace with next  phase later (EmergencySiteSearch)  return new EmergencySiteSearch(currentDirection, batteryLevel);
+        int batteryLevel = 0;
+                return new EmergencySiteSearch(direction, batteryLevel);
     }
 
     public Set<String> getFoundCreeks() {
@@ -116,6 +117,6 @@ public class BeginCoastlineScan implements Phase {
         actions.heading(param, headingCmd, newDirection);
         taskQueue.add(headingCmd);
 
-        direction = newDirection;
+        this.direction = newDirection;
     }
 }
