@@ -16,37 +16,74 @@ public class BeginCoastlineScan implements Phase {
     private final Set<String> creeks = new HashSet<>();
     private Direction direction;
     private int flightCounter = 0;
-    private final int maxFlightCycles = 80; // Atemporary limit to avoid infinite loop
 
-    public BeginCoastlineScan(Direction direction) {
-        this.direction = direction;
+    public BeginCoastlineScan(Direction newDirection) {
+        this.direction = newDirection;
     }
 
     @Override
     public JSONObject createDecision(Explorer explorer) {
         Actions actions = new Actions();
-        JSONObject decision = new JSONObject();
+        
+        JSONObject flyCmd = new JSONObject();
+        JSONObject scanCmd = new JSONObject();
 
         if (!taskQueue.isEmpty()) {
             return taskQueue.poll();
         }
+        
+        if (flightCounter == 0){
+            actions.scan(scanCmd);
+            taskQueue.add(scanCmd);
 
-        // Simplified right-hand rule: scan every 3 steps
-        if (flightCounter % 3 == 0) {
-            actions.scan(decision);
+            actions.fly(flyCmd);
+            taskQueue.add(flyCmd);
+
+            actions.scan(scanCmd);
+            taskQueue.add(scanCmd);
+
+            actions.fly(flyCmd);
+            taskQueue.add(flyCmd);
+
         } else {
-            actions.fly(decision);
+            if (creeks.isEmpty()){
+                taskQueue.add(actions.echo(direction));
+
+                if (explorer.getLastEchoFront().equals("GROUND")) {
+                    actions.scan(scanCmd);
+                    taskQueue.add(scanCmd);
+
+                    actions.fly(flyCmd);
+                    taskQueue.add(flyCmd);
+
+                } else if (explorer.getLastEchoFront().equals("OUT_OF_RANGE")){
+                    if (direction.toString().equals("W")) {
+                        turnAndFly(direction.turnLeft(), actions);
+                        explorer.directionSetter(direction);
+                        turnAndFly(direction.turnLeft(), actions);
+                        explorer.directionSetter(direction);
+                        taskQueue.add(actions.echo(direction));
+
+                    } else if (direction.toString().equals("E")){
+                        turnAndFly(direction.turnRight(), actions);
+                        explorer.directionSetter(direction);
+                        turnAndFly(direction.turnRight(), actions);
+                        explorer.directionSetter(direction);
+                        taskQueue.add(actions.echo(direction));
+                    }
+                }
+            }
         }
 
         flightCounter++;
-        return decision;
+        return taskQueue.poll();
     }
 
     @Override
     public void checkDrone(Explorer explorer) {
         JSONObject extras = explorer.getLastExtras();
 
-        if (extras != null && extras.has("creeks")) {
+        if (extras.has("creeks")) {
             for (Object creek : extras.getJSONArray("creeks")) {
                 creeks.add(creek.toString());
             }
@@ -55,7 +92,7 @@ public class BeginCoastlineScan implements Phase {
 
     @Override
     public boolean isFinished() {
-        return flightCounter >= maxFlightCycles;
+        return !creeks.isEmpty();
     }
 
     @Override
@@ -65,5 +102,20 @@ public class BeginCoastlineScan implements Phase {
 
     public Set<String> getFoundCreeks() {
         return creeks;
+    }
+
+    private void turnAndFly(Direction newDirection, Actions actions) {
+        JSONObject headingCmd = new JSONObject();
+        JSONObject flyCmd = new JSONObject();
+        JSONObject scanCmd = new JSONObject();
+        JSONObject param = new JSONObject();
+
+        actions.scan(scanCmd);
+        taskQueue.add(scanCmd);
+
+        actions.heading(param, headingCmd, newDirection);
+        taskQueue.add(headingCmd);
+
+        direction = newDirection;
     }
 }

@@ -9,6 +9,8 @@ import org.json.JSONTokener;
 
 import ca.mcmaster.se2aa4.island.team50.LocateIsland;
 import ca.mcmaster.se2aa4.island.team50.Phase;
+import java.util.HashSet;
+import java.util.Set;
 import eu.ace_design.island.bot.IExplorerRaid;
 import java.time.chrono.ThaiBuddhistChronology;
 
@@ -17,6 +19,7 @@ public class Explorer implements IExplorerRaid {
     private final Logger logger = LogManager.getLogger();
     private Direction direction;
     private int battery;
+    private Set<String> creeks;
 
     // Stores echo results
     private String lastEchoFront = null;
@@ -82,24 +85,42 @@ public class Explorer implements IExplorerRaid {
         }
         
 
-        if (response.has("extras") && response.getJSONObject("extras").has("found")) {
+        if (response.has("extras")) {
             lastExtras = response.getJSONObject("extras");
 
-            String found = lastExtras.getString("found");
-            int range = lastExtras.getInt("range");
-            logger.info(found);
-            logger.info(range);
+            if (lastExtras.has("found")){
+                String found = lastExtras.getString("found");
+                int range = lastExtras.getInt("range");
+                if (lastDirection.equals(direction.toString())){
+                    lastEchoFront = found;
+                    frontRange = range;
+                } else if (lastDirection.equals(direction.turnLeft().toString())){
+                    lastEchoLeft = found;
+                    leftRange = range;
+                } else if (lastDirection.equals(direction.turnRight().toString())){
+                    lastEchoRight = found;
+                    rightRange = range;
+                }
 
-            if (lastDirection.equals(direction.toString())){
-                lastEchoFront = found;
-                frontRange = range;
-            } else if (lastDirection.equals(direction.turnLeft().toString())){
-                lastEchoLeft = found;
-                leftRange = range;
-            } else if (lastDirection.equals(direction.turnRight().toString())){
-                lastEchoRight = found;
-                rightRange = range;
-            }
+                logger.info(found);
+                logger.info(range);
+
+                if (lastDirection.equals(direction.toString())){
+                    lastEchoFront = found;
+                    frontRange = range;
+                } else if (lastDirection.equals(direction.turnLeft().toString())){
+                    lastEchoLeft = found;
+                    leftRange = range;
+                } else if (lastDirection.equals(direction.turnRight().toString())){
+                    lastEchoRight = found;
+                    rightRange = range;
+                }
+
+            } else if (lastExtras.has("creeks")) {
+                for (Object creek : lastExtras.getJSONArray("creeks")) {
+                    creeks.add(creek.toString());
+                }
+            } 
         }
         logger.info("Updated ranges: Front = " + frontRange+ ", Left = " + leftRange+ ", Right = " + rightRange);
         logger.info("Updated echoes "+ lastEchoLeft+" "+lastEchoFront+" "+lastEchoRight);
@@ -152,6 +173,11 @@ public class Explorer implements IExplorerRaid {
     public int getBatteryLevel() {
         return battery;
     }
+
+    public Set<String> getCreeks() {
+        return creeks;
+    }
+
     public Logger getLogger() {
         return logger;
     }
