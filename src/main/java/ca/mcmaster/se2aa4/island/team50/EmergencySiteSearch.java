@@ -22,10 +22,10 @@ public class EmergencySiteSearch implements Phase {
         return finished;
     }
 
-    //@Override
-    //public Phase nextPhase() {
-    //    return null;
-    //}
+    @Override
+    public Phase nextPhase() {
+        return null;
+    }
 
     @Override
     public JSONObject createDecision(Explorer explorer) {
